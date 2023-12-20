@@ -1,6 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import Day from "./Day.svelte";
+    import HabitModal from "./HabitModal.svelte";
     import {
         startOfMonth,
         endOfMonth,
@@ -8,7 +9,19 @@
         format,
     } from "date-fns";
     export let habitsData;
+
     let dataLoaded = false;
+    let showModal = false;
+    let selectedDate = null;
+
+    function openModal(day) {
+        selectedDate = formatDate(day);
+        showModal = true;
+    }
+
+    function closeModal() {
+        showModal = false;
+    }
 
     // Get the current date and determine the start and end of the month
     const today = new Date();
@@ -28,9 +41,6 @@
     while (paddedDays.length % 7 !== 0) {
         paddedDays.push(null);
     }
-
-    // Utility function to format the date
-    const formatDate = (date) => (date ? format(date, "yyyy-MM-dd") : "");
 
     let thisMonthsDayData = [];
     onMount(async () => {
@@ -52,6 +62,9 @@
         }
     });
 
+    // Utility function to format the date
+    const formatDate = (date) => (date ? format(date, "yyyy-MM-dd") : "");
+
     function getDayData(date) {
         const dayLogs = thisMonthsDayData.filter((log) => log.date === date);
         return dayLogs
@@ -71,13 +84,31 @@
     }
 </script>
 
+{#if showModal}
+    <HabitModal
+        {habitsData}
+        {selectedDate}
+        on:closeModal={closeModal}
+        on:habitSet={() => {
+            // Optionally, refresh the state here if necessary
+        }}
+    />
+{/if}
+
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="container">
     <div class="grid">
         {#if dataLoaded}
             {#each paddedDays as day}
-                <div class="day {day === null ? 'non-month-day' : ''}">
+                <div
+                    class="day {day === null ? 'non-month-day' : ''}"
+                    on:click={() => openModal(day, day)}
+                >
                     {#if day}
-                        <Day daysData={getDayData(formatDate(day))} />
+                        <Day
+                            daysData={getDayData(formatDate(day))}
+                            dayNumber={day.getDate()}
+                        />
                     {/if}
                 </div>
             {/each}
@@ -102,12 +133,11 @@
         width: 60vw;
     }
     .day {
-        border: 1px #e0e0e0 solid;
         padding: 0px;
         text-align: center;
-        background-color: #f0f0f0;
+        background-color: #131313;
     }
     .non-month-day {
-        background-color: #e0e0e0;
+        background-color: black;
     }
 </style>

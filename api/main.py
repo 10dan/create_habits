@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
-DATABASE_URL = f"postgresql://habit_user:{os.getenv('HABIT_USER_PASSWORD')}@localhost/create_habits"
+DATABASE_URL = f"postgresql://habit_user:{os.getenv('HABIT_USER_PASS')}@localhost/create_habits"
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
