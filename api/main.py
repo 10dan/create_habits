@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import uvicorn
 import os
+from models import HabitLog
 
 app = FastAPI()
 
@@ -52,6 +53,32 @@ def get_habits_for_month(year: int, month: int):
     finally:
         cur.close()
         conn.close()
+
+@app.post("/upsert_days_habits")
+def upsert_habit(habit_log: HabitLog):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            INSERT INTO habit_log (habit_id, date, status)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (habit_id, date)
+            DO UPDATE SET status = EXCLUDED.status
+            """,
+            (habit_log.habit_id, habit_log.date, habit_log.state)
+        )
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        print("Error:", e)
+        return {"status": "error", "message": str(e)}
+    finally:
+        cur.close()
+        conn.close()
+
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=9922, reload=True)

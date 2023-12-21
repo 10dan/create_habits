@@ -1,6 +1,15 @@
 <script>
     export let daysData;
     export let dayNumber;
+    export let habitsData = [];
+    
+    let habitsWithState = habitsData.map((habitData) => ({
+        ...habitData,
+        state: daysData.some((entry) => entry.habit_id === habitData.id)
+    }));
+
+    console.log(habitsWithState);
+
 </script>
 
 <div class="day-container">
@@ -9,14 +18,16 @@
     </div>
 
     <div class="habit-grid">
-        {#each daysData as habit}
-            <div
-                class="habit-cell"
-                style="background-color: {habit.displayColor}"
-                title={habit.habitDescription}
-            >
-                {habit.habitName}{habit.value ? ` ${habit.value}` : ""}
-            </div>
+        {#each habitsWithState as habit}
+            {#if habit.state}
+                <div
+                    class="habit-cell"
+                    style="background-color: {habit.display_colour}"
+                    title={habit.description}
+                >
+                    {habit.name}{habit.value ? ` ${habit.value}` : ""}
+                </div>
+            {/if}
         {/each}
     </div>
 </div>

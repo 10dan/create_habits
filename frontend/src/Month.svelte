@@ -8,14 +8,17 @@
         eachDayOfInterval,
         format,
     } from "date-fns";
-    export let habitsData;
 
+    export let habitsData;
+    let thisMonthsDayData = [];
     let dataLoaded = false;
     let showModal = false;
     let selectedDate = null;
+    let selectedDateData = null;
 
     function openModal(day) {
         selectedDate = formatDate(day);
+        selectedDateData = getDayData(formatDate(day));
         showModal = true;
     }
 
@@ -23,7 +26,6 @@
         showModal = false;
     }
 
-    // Get the current date and determine the start and end of the month
     const today = new Date();
     const firstDayOfMonth = startOfMonth(today);
     const lastDayOfMonth = endOfMonth(today);
@@ -31,19 +33,18 @@
         start: firstDayOfMonth,
         end: lastDayOfMonth,
     });
-
-    // Format the days to start from Monday
     const startWeekday = firstDayOfMonth.getDay();
     const daysToPad = startWeekday === 0 ? 6 : startWeekday - 1;
     const paddedDays = new Array(daysToPad).fill(null).concat(daysInMonth);
-
-    // Add additional padding to make the array length a multiple of 7
     while (paddedDays.length % 7 !== 0) {
         paddedDays.push(null);
     }
 
-    let thisMonthsDayData = [];
     onMount(async () => {
+        await getThisMonthsData();
+    });
+
+    async function getThisMonthsData() {
         const year = today.getFullYear();
         const month = today.getMonth() + 1; // getMonth() returns 0-11
 
@@ -60,7 +61,7 @@
                 response.status,
             );
         }
-    });
+    }
 
     // Utility function to format the date
     const formatDate = (date) => (date ? format(date, "yyyy-MM-dd") : "");
@@ -87,10 +88,11 @@
 {#if showModal}
     <HabitModal
         {habitsData}
+        {selectedDateData}
         {selectedDate}
         on:closeModal={closeModal}
         on:habitSet={() => {
-            // Optionally, refresh the state here if necessary
+            getThisMonthsData();
         }}
     />
 {/if}
@@ -102,12 +104,13 @@
             {#each paddedDays as day}
                 <div
                     class="day {day === null ? 'non-month-day' : ''}"
-                    on:click={() => openModal(day, day)}
+                    on:click={() => openModal(day)}
                 >
                     {#if day}
                         <Day
                             daysData={getDayData(formatDate(day))}
                             dayNumber={day.getDate()}
+                            {habitsData}
                         />
                     {/if}
                 </div>

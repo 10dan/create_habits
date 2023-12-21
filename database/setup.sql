@@ -14,6 +14,8 @@ CREATE TABLE habit_log (
     status BOOLEAN NOT NULL,
     value FLOAT
 );
+ALTER TABLE habit_log
+ADD CONSTRAINT habit_log_unique UNIQUE (habit_id, date);
 
 INSERT INTO habit (habit_id, name, description, display_colour) VALUES
 ('Meditation', 'Practice of mindfulness or concentration', '#57c27e'),

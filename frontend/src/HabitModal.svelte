@@ -1,37 +1,72 @@
 <!-- HabitModal.svelte -->
 <script>
-    import { createEventDispatcher } from 'svelte';
-    export let habitsData;
-    export let selectedDate;
-
+    import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
+    export let selectedDate;
+    export let habitsData = [];
+    export let selectedDateData = [];
+
+    let habitsWithState = habitsData.map((habitData) => {
+        return {
+            ...habitData,
+            state: selectedDateData.some(
+                (entry) => entry.habit_id === habitData.id,
+            ),
+        };
+    });
 
     async function setHabit(habitId) {
-        const response = await fetch('/create_habit_entry', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ habit_id: habitId, date: selectedDate }),
-        });
+        const habitIndex = habitsWithState.findIndex((h) => h.id === habitId);
+        if (habitIndex !== -1) {
+            habitsWithState[habitIndex].state =
+                !habitsWithState[habitIndex].state;
+            const response = await fetch(
+                "http://localhost:9922/upsert_days_habits",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        habit_id: habitId,
+                        date: selectedDate,
+                        state: habitsWithState[habitIndex].state,
+                    }),
+                },
+            );
 
-        if (response.ok) {
-            dispatch('habitSet', { habitId });
-        } else {
-            console.error('Error creating habit entry', response.status);
+            if (response.ok) {
+
+                dispatch("habitsUpdated");
+            } else {
+                // If the update fails, revert the state change in the array
+                habitsWithState[habitIndex].state =
+                    !habitsWithState[habitIndex].state;
+                console.error("Error updating habit entry", response.status);
+            }
         }
     }
 
     function closeModal() {
-        dispatch('closeModal');
+        dispatch("closeModal");
     }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="modal-background" on:click={closeModal}>
     <div class="modal-content" on:click|stopPropagation>
-        {#each habitsData as habit}
-            <div class="habit-entry" on:click={() => setHabit(habit.id)}>
+        <div>
+            {selectedDate}
+        </div>
+
+        {#each habitsWithState as habit}
+            <div
+                class="habit-entry"
+                on:click={() => setHabit(habit.id)}
+                style="background-color: {habit.state
+                    ? habit.display_colour
+                    : '#b5b5b5'}"
+            >
                 {habit.name}
             </div>
         {/each}
